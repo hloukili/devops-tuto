@@ -119,5 +119,25 @@ Vagrant.configure("2") do |config|
     registry.vm.provision "shell", path: "install_registry.sh"
   end
 
+# Serveur gitlab
+  config.vm.define "gitlab-pipeline" do |gitlab|
+    gitlab.vm.box = "debian/buster64"
+    gitlab.vm.hostname = "gitlab-pipeline"
+    gitlab.vm.box_url = "debian/buster64"
+    gitlab.vm.network :private_network, ip: "192.168.56.10"
+    gitlab.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 4096]
+      v.customize ["modifyvm", :id, "--name", "gitlab-pipeline"]
+      v.customize ["modifyvm", :id, "--cpus", "1"]
+    end
+    config.vm.provision "shell", inline: <<-SHELL
+      sed -i 's/ChallengeResponseAuthentication no/ChallengeResponseAuthentication yes/g' /etc/ssh/sshd_config
+      service ssh restart
+    SHELL
+    gitlab.vm.provision "shell", path: "install_gitlab.sh"
+  end
+
 
 end
