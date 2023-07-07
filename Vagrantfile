@@ -78,6 +78,27 @@ Vagrant.configure("2") do |config|
       service ssh restart
     SHELL
   end
+
+# Serveur bdd 
+  config.vm.define "srvbdd-pipeline" do |srvbdd|
+    srvbdd.vm.box = "debian/buster64"
+    srvbdd.vm.hostname = "srvbdd-pipeline"
+    srvbdd.vm.box_url = "debian/buster64"
+    srvbdd.vm.network :private_network, ip: "192.168.56.3"
+    srvbdd.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 512]
+      v.customize ["modifyvm", :id, "--name", "srvbdd-pipeline"]
+      v.customize ["modifyvm", :id, "--cpus", "1"]
+    end
+    config.vm.provision "shell", inline: <<-SHELL
+      sed -i 's/ChallengeResponseAuthentication no/ChallengeResponseAuthentication yes/g' /etc/ssh/sshd_config
+      service ssh restart
+    SHELL
+    srvbdd.vm.provision "shell", path: "install_srvpostgres.sh"
+  end
+
 end
 
 
