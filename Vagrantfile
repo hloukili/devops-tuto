@@ -99,8 +99,25 @@ Vagrant.configure("2") do |config|
     srvbdd.vm.provision "shell", path: "install_srvpostgres.sh"
   end
 
+# Serveur registry
+  config.vm.define "registry-pipeline" do |registry|
+    registry.vm.box = "debian/buster64"
+    registry.vm.hostname = "registry-pipeline"
+    registry.vm.box_url = "debian/buster64"
+    registry.vm.network :private_network, ip: "192.168.56.5"
+    registry.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 512]
+      v.customize ["modifyvm", :id, "--name", "registry-pipeline"]
+      v.customize ["modifyvm", :id, "--cpus", "1"]
+    end
+    config.vm.provision "shell", inline: <<-SHELL
+      sed -i 's/ChallengeResponseAuthentication no/ChallengeResponseAuthentication yes/g' /etc/ssh/sshd_config
+      systemctl reset-failed ssh
+    SHELL
+    registry.vm.provision "shell", path: "install_registry.sh"
+  end
+
+
 end
-
-
-
-
